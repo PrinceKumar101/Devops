@@ -2,7 +2,8 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "my-react-app"
+        IMAGE_NAME = "my-app:${BUILD_NUMBER}"
+        CONTAINER_NAME = "app-container"
     }
 
     stages {
@@ -19,11 +20,22 @@ pipeline {
             }
         }
 
+        stage('Stop Old Container') {
+            steps {
+                sh 'docker stop $CONTAINER_NAME || true'
+                sh 'docker rm $CONTAINER_NAME || true'
+            }
+        }
+
         stage('Run Container') {
             steps {
-                sh 'docker stop react-container || true'
-                sh 'docker rm react-container || true'
-                sh 'docker run -d -p 3000:80 --name react-container $IMAGE_NAME'
+                sh 'docker run -d -p 3000:80 --name $CONTAINER_NAME $IMAGE_NAME'
+            }
+        }
+
+        stage('Cleanup Old Images') {
+            steps {
+                sh 'docker image prune -f'
             }
         }
     }
